@@ -35,7 +35,7 @@ jobs:
           git pull origin main
           ./.venv/bin/pip install -e .
           screen -S magic-maze -X quit || true
-          TERM=xterm screen -dmS magic-maze "$DEPLOY/.venv/bin/gunicorn" --worker-class eventlet -w 1 --chdir "$DEPLOY" --bind 0.0.0.0:5001 --error-logfile "$DEPLOY/app.log" run:app
+          TERM=xterm screen -dmS magic-maze "$DEPLOY/.venv/bin/gunicorn" --worker-class eventlet -w 1 --chdir "$DEPLOY" --bind 127.0.0.1:5001 --error-logfile "$DEPLOY/app.log" run:app
           sleep 2
           screen -ls || true
           ps aux | grep -v grep | grep gunicorn || echo "gunicorn NOT running"
