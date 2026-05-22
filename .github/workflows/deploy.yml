@@ -30,11 +30,12 @@ jobs:
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash <<'ENDSSH'
           set -ex
-          cd ${{ secrets.DEPLOY_PATH }}
+          DEPLOY=$(printf '%s' "${{ secrets.DEPLOY_PATH }}" | tr -d '[:space:]')
+          cd "$DEPLOY"
           git pull origin main
           ./.venv/bin/pip install -e .
           screen -S magic-maze -X quit || true
-          TERM=xterm screen -dmS magic-maze ${{ secrets.DEPLOY_PATH }}/.venv/bin/gunicorn --worker-class eventlet -w 1 --chdir ${{ secrets.DEPLOY_PATH }} --bind 0.0.0.0:5001 --error-logfile ${{ secrets.DEPLOY_PATH }}/app.log run:app
+          TERM=xterm screen -dmS magic-maze "$DEPLOY/.venv/bin/gunicorn" --worker-class eventlet -w 1 --chdir "$DEPLOY" --bind 0.0.0.0:5001 --error-logfile "$DEPLOY/app.log" run:app
           sleep 2
           screen -ls || true
           ps aux | grep -v grep | grep gunicorn || echo "gunicorn NOT running"
