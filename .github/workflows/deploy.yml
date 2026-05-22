@@ -34,8 +34,9 @@ jobs:
           git pull origin main
           ./.venv/bin/pip install -e .
           screen -S magic-maze -X quit || true
-          screen -L -Logfile ${{ secrets.DEPLOY_PATH }}/app.log -dmS magic-maze ./.venv/bin/python run.py
+          screen -L -Logfile ${{ secrets.DEPLOY_PATH }}/app.log -dmS magic-maze \
+            ./.venv/bin/gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:5001 run:app
           sleep 2
           screen -ls || true
-          ps aux | grep -v grep | grep run.py || echo "python NOT running"
+          ps aux | grep -v grep | grep gunicorn || echo "gunicorn NOT running"
           ENDSSH
