@@ -19,14 +19,19 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd ${{ secrets.DEPLOY_PATH }}
-            git pull origin main
-            pip install -e .
-            sudo systemctl restart magic-maze
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            cd ${{ secrets.DEPLOY_PATH }} &&
+            git pull origin main &&
+            ${{ secrets.DEPLOY_PATH }}/.venv/bin/pip install -e . &&
+            screen -S magic-maze -X quit || true
+            screen -dmS magic-maze bash -c 'cd ${{ secrets.DEPLOY_PATH }} && .venv/bin/python run.py'
+          "
