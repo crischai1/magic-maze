@@ -28,10 +28,14 @@ jobs:
 
       - name: Deploy
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            cd ${{ secrets.DEPLOY_PATH }} &&
-            git pull origin main &&
-            ${{ secrets.DEPLOY_PATH }}/.venv/bin/pip install -e . &&
-            screen -S magic-maze -X quit || true
-            screen -dmS magic-maze bash -c 'cd ${{ secrets.DEPLOY_PATH }} && .venv/bin/python run.py'
-          "
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash <<'ENDSSH'
+          set -ex
+          cd ${{ secrets.DEPLOY_PATH }}
+          git pull origin main
+          ./.venv/bin/pip install -e .
+          screen -S magic-maze -X quit || true
+          screen -L -Logfile ${{ secrets.DEPLOY_PATH }}/app.log -dmS magic-maze ./.venv/bin/python run.py
+          sleep 2
+          screen -ls || true
+          ps aux | grep -v grep | grep run.py || echo "python NOT running"
+          ENDSSH
