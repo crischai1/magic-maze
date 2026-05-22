@@ -1,0 +1,21 @@
+[project]
+name = "magic-maze"
+version = "0.1.0"
+description = "Online multiplayer version of the cooperative board game Magic Maze"
+requires-python = ">=3.10"
+dependencies = [
+    "Flask>=3.0",
+    "Flask-SocketIO>=5.3",
+    "python-socketio>=5.11",
+    "eventlet>=0.35",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Co-Op Maze Heist — Home{% endblock %}
+{% block content %}
+<section class="home">
+    <h1>Co-Op Maze Heist</h1>
+    <p class="lead">
+        A real-time cooperative game inspired by <em>Magic Maze</em>. Help the four heroes find
+        their items and escape — without talking, except in brief, hard-earned windows.
+    </p>
+
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+    <form method="post" class="home-form">
+        <label>
+            <span>Your name</span>
+            <input name="username" required maxlength="32" value="{{ username }}" />
+        </label>
+        <div class="home-actions">
+            <button type="submit" name="action" value="create" class="primary">Create new lobby</button>
+            <div class="join-group">
+                <input name="code" placeholder="ROOM CODE" maxlength="4" pattern="[A-Z0-9]{4}" style="text-transform:uppercase" />
+                <button type="submit" name="action" value="join">Join</button>
+            </div>
+        </div>
+    </form>
+
+    <section class="rules-summary">
+        <h2>How it works</h2>
+        <ul>
+            <li>1–8 players cooperatively control 4 heroes: <strong style="color:#fbc02d">Barbarian</strong> (yellow),
+                <strong style="color:#9d6cc1">Mage</strong> (purple), <strong style="color:#3fb950">Elf</strong> (green),
+                <strong style="color:#db8b32">Dwarf</strong> (orange).</li>
+            <li>Each player gets an <strong>Action card</strong> limiting which actions they may take on <em>any</em> hero (move N/E/S/W, escalator, vortex, explore).</li>
+            <li>Move actions <em>slide</em> a hero in one direction until a wall, the board edge, or another hero stops it.
+                <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> step one cell; <strong>click</strong> a highlighted square to slide further.</li>
+            <li>Phase 1: get all 4 heroes onto their matching-color <strong>Item</strong> squares <em>at the same time</em> to trigger the theft. Phase 2: each hero escapes through its matching <strong>Exit</strong>.</li>
+            <li>No talking. Chat unlocks only when a hero flips the <strong>Sand Timer</strong>, and locks again on the next action.</li>
+        </ul>
+
+        <h2>The four heroes</h2>
+        <div class="legend">
+            <div class="legend-item"><span class="legend-icon" style="color:#fbc02d">⚔</span><div><strong>Barbarian (Yellow)</strong><br/>The fighter. In scenarios 6+, only the Barbarian can disable Security Cameras.</div></div>
+            <div class="legend-item"><span class="legend-icon" style="color:#9d6cc1">⚗</span><div><strong>Mage (Purple)</strong><br/>The wizard. In scenarios 5+, only the Mage triggers Crystal Balls (two-tile exploration).</div></div>
+            <div class="legend-item"><span class="legend-icon" style="color:#3fb950">🏹</span><div><strong>Elf (Green)</strong><br/>The ranger. In scenarios 4+, communication unlocks while the Elf explores a new tile.</div></div>
+            <div class="legend-item"><span class="legend-icon" style="color:#db8b32">⛏</span><div><strong>Dwarf (Orange)</strong><br/>The miner. In scenarios 4+, only the Dwarf can slip through orange wall-passages.</div></div>
+        </div>
+
+        <h2>Square types — a key to the icons</h2>
+        <div class="legend">
+            <div class="legend-item">
+                <span class="legend-icon">▢</span>
+                <div><strong>Start</strong><br/>The 4 central squares of the starting tile. At the beginning of the game, the four heroes are placed <em>randomly</em> on these.</div>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon" style="color:#fbc02d"><svg class="legend-svg" viewBox="-16 -16 32 32"><use href="#glyph-item"/></svg></span>
+                <div><strong>Item / Treasure chest</strong> (colored, one per hero)<br/>When <em>all four heroes</em> stand on their matching-color Item squares <strong>simultaneously</strong>, the theft is triggered — the heroes pick up their loot, the alarm goes off, and Phase 2 begins. Each hero has a chest in its own color: <span style="color:#fbc02d">yellow</span>, <span style="color:#9d6cc1">purple</span>, <span style="color:#3fb950">green</span>, <span style="color:#db8b32">orange</span>.</div>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon" style="color:#9d6cc1"><svg class="legend-svg" viewBox="-16 -16 32 32"><use href="#glyph-exit"/></svg></span>
+                <div><strong>Exit</strong> (colored)<br/>Doorway-with-arrow. Available only after the theft. Each hero must escape through the Exit of its own color.</div>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon" style="color:#3fb950"><svg class="legend-svg" viewBox="-16 -16 32 32"><use href="#glyph-vortex"/></svg></span>
+                <div><strong>Vortex</strong> (colored)<br/>The Vortex action <em>teleports</em> any hero, from anywhere on the board, to <em>any matching-color</em> vortex. Permanently disabled the moment the theft happens.</div>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon"><svg class="legend-svg" viewBox="-16 -16 32 32"><use href="#glyph-escalator"/></svg></span>
+                <div><strong>Escalator</strong><br/>Two paired squares on a tile. The Escalator action jumps a hero between them; the color of the hero doesn't matter.</div>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon" style="color:#fbc02d"><svg class="legend-svg" viewBox="-16 -16 32 32"><use href="#glyph-explore-door"/></svg></span>
+                <div><strong>Explore door</strong> (colored, on tile edges)<br/>A door-shaped opening on the edge of a 4×4 tile. When the matching-color hero stands on it, the player with the Explore action may place the next tile through that door. Used doors are removed once explored. <em>All heroes can walk through the door cell — the color only gates who can <strong>trigger</strong> exploration.</em></div>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon" style="color:#b8c4d9"><svg class="legend-svg" viewBox="-16 -16 32 32"><use href="#glyph-sand-timer"/></svg></span>
+                <div><strong>Sand Timer square</strong> (one-use)<br/>Stepping onto an unused Sand-Timer square <em>physically flips</em> the timer: the elapsed sand is now the remaining sand. Can give more or less time depending on when you flip it. Also unlocks chat until the next action.</div>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon" style="color:#9a7fff"><svg class="legend-svg" viewBox="-16 -16 32 32"><use href="#glyph-crystal"/></svg></span>
+                <div><strong>Crystal Ball</strong> (Mage-only, scenarios 5+)<br/>When the Mage stands on an unused Crystal Ball and triggers Explore, the player may place <em>up to two</em> tiles. Used balls are marked Out-of-Order.</div>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon" style="color:#d4d000"><svg class="legend-svg" viewBox="-16 -16 32 32"><use href="#glyph-camera"/></svg></span>
+                <div><strong>Security Camera</strong> (scenarios 6+)<br/>When two or more cameras are revealed and active, no hero may step on a Sand-Timer square. The Barbarian disables one by stepping on it.</div>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon" style="color:#db8b32"><svg class="legend-svg" viewBox="-16 -16 32 32"><use href="#glyph-dwarf-passage"/></svg></span>
+                <div><strong>Dwarf Passage</strong> (scenarios 4+)<br/>An orange one-way passage in a wall. Only the Dwarf can slip through — all other heroes are blocked.</div>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon">▥</span>
+                <div><strong>Out-of-Order marker</strong><br/>A grey overlay placed on a Sand-Timer, Crystal-Ball, or Camera square that has already been used. The square's ability cannot be triggered again.</div>
+            </div>
+            <div class="legend-item">
+                <span class="legend-icon">█</span>
+                <div><strong>Walls and openings</strong><br/>Bold white lines between squares are walls — heroes cannot move through them. Some tiles are mostly open; others are restrictive (narrow corridors, plus-shapes, hallways, two-room divides, inner pillars).</div>
+            </div>
+        </div>
+    </section>
+</section>
+{% endblock %}

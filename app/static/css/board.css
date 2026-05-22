@@ -1,0 +1,118 @@
+.game-wrap {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 1rem;
+    height: calc(100vh - 80px);
+    align-items: stretch;
+}
+
+.board-pane {
+    background: #0a0d12;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#board-svg {
+    width: 100%;
+    height: 100%;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.phase-banner {
+    position: absolute;
+    top: 10px; left: 10px;
+    background: rgba(0,0,0,0.6);
+    color: var(--text);
+    padding: 0.4rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+/* Tiles and cells */
+.cell-bg { fill: #1b2230; }
+.cell-start { fill: #25304a; }
+.cell-wall { stroke: #d6dee8; stroke-width: 3; stroke-linecap: square; }
+.tile-border { fill: none; stroke: #3a4252; stroke-width: 1; }
+
+/* Hero / feature colors */
+.feature-item-Y, .feature-exit-Y, .feature-vortex-Y, .feature-explore-Y { color: var(--hero-yellow); }
+.feature-item-P, .feature-exit-P, .feature-vortex-P, .feature-explore-P { color: var(--hero-purple); }
+.feature-item-G, .feature-exit-G, .feature-vortex-G, .feature-explore-G { color: var(--hero-green); }
+.feature-item-O, .feature-exit-O, .feature-vortex-O, .feature-explore-O { color: var(--hero-orange); }
+.feature-sand-timer { color: #b8c4d9; }
+.feature-crystal-ball { color: #9a7fff; }
+.feature-camera { color: #d4d000; }
+.feature-escalator { color: #cfd8dc; }
+.escalator-line {
+    stroke: currentColor;
+    stroke-width: 3.5;
+    stroke-linecap: round;
+    stroke-dasharray: 4 3;
+    opacity: 0.85;
+    pointer-events: none;
+}
+.escalator-end {
+    fill: currentColor;
+    stroke: #0a1422;
+    stroke-width: 1;
+    pointer-events: none;
+}
+.feature-dwarf-passage { color: var(--hero-orange); }
+.feature-out-of-order { color: #555; }
+.feature-explore-spent { color: #4a5260 !important; opacity: 0.5; }
+.feature-start { display: none; }
+
+/* Pawns */
+.pawn {
+    cursor: pointer;
+    transition: transform 0.18s ease;
+}
+.pawn-Y circle { fill: var(--hero-yellow); stroke: #fff; stroke-width: 2; }
+.pawn-P circle { fill: var(--hero-purple); stroke: #fff; stroke-width: 2; }
+.pawn-G circle { fill: var(--hero-green); stroke: #fff; stroke-width: 2; }
+.pawn-O circle { fill: var(--hero-orange); stroke: #fff; stroke-width: 2; }
+.pawn.has-item circle { stroke: #fff; stroke-width: 3; filter: drop-shadow(0 0 6px gold); }
+.pawn.exited { opacity: 0.3; }
+.pawn.selected circle { stroke-width: 4; stroke: var(--accent); filter: drop-shadow(0 0 8px var(--accent)); }
+
+/* Movement highlights */
+.move-hint {
+    fill: var(--accent);
+    fill-opacity: 0.18;
+    stroke: var(--accent);
+    stroke-width: 1;
+    cursor: pointer;
+    transition: fill-opacity 0.1s;
+}
+.move-hint:hover { fill-opacity: 0.45; }
+
+.vortex-hint {
+    fill: var(--hero-purple);
+    fill-opacity: 0.28;
+    stroke: var(--hero-purple);
+    stroke-width: 1.5;
+    cursor: pointer;
+}
+.vortex-hint:hover { fill-opacity: 0.6; }
+
+/* Used out-of-order marker */
+.out-of-order {
+    fill: #555;
+    fill-opacity: 0.5;
+    stroke: #777;
+    stroke-width: 1;
+    pointer-events: none;
+}
+
+@media (max-width: 900px) {
+    .game-wrap {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+}

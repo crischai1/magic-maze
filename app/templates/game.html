@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Game {{ code }} — Co-Op Maze Heist{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/board.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ui.css') }}" />
+{% endblock %}
+{% block content %}
+<section class="game-wrap"
+         data-code="{{ code }}"
+         data-username="{{ username }}"
+         data-player-id="{{ player_id }}">
+
+    <main class="board-pane">
+        <svg id="board-svg" viewBox="-50 -50 600 600" preserveAspectRatio="xMidYMid meet">
+            <!-- Glyph <defs> live in base.html so the home-page legend and the
+                 board reuse the same artwork. -->
+            <g id="tile-layer"></g>
+            <g id="overlay-layer"></g>
+            <g id="pawn-layer"></g>
+        </svg>
+        <div id="phase-banner" class="phase-banner"></div>
+    </main>
+
+    <aside class="sidebar">
+        <section class="card">
+            <h3>Timer</h3>
+            <div id="timer-display" class="timer">--:--</div>
+            <div id="timer-bar"><div id="timer-fill"></div></div>
+        </section>
+
+        <section class="card deck-card">
+            <h3>Deck</h3>
+            <div id="deck-counter" class="deck-counter">— / —</div>
+            <div class="deck-label">tiles remaining</div>
+        </section>
+
+        <section class="card">
+            <h3>Your actions</h3>
+            <div id="action-card" class="action-card"></div>
+        </section>
+
+        <section class="card">
+            <h3>Players</h3>
+            <ul id="players-list" class="players-list"></ul>
+        </section>
+
+        <section class="card chat-card">
+            <h3>Chat <span id="chat-lock" class="lock">🔒</span></h3>
+            <ul id="chat-log" class="chat-log"></ul>
+            <form id="chat-form">
+                <input id="chat-input" type="text" maxlength="200" placeholder="Locked — wait for a Do-Anything square" disabled />
+            </form>
+        </section>
+
+        <section class="card help">
+            <h3>Controls</h3>
+            <p>Click a pawn to select it.</p>
+            <p>Click a highlighted blue square to slide there (your card must allow that direction).</p>
+            <p>Click a purple square to teleport via vortex (any hero, any matching-color vortex).</p>
+            <p>Keys: <kbd>W</kbd>/<kbd>A</kbd>/<kbd>S</kbd>/<kbd>D</kbd> slide max, <kbd>E</kbd> escalator, <kbd>X</kbd> explore. <kbd>1</kbd>=Y <kbd>2</kbd>=P <kbd>3</kbd>=G <kbd>4</kbd>=O.</p>
+        </section>
+    </aside>
+</section>
+
+<div id="result-overlay" class="overlay hidden">
+    <div class="overlay-card">
+        <h2 id="result-title"></h2>
+        <p id="result-reason"></p>
+        <a href="{{ url_for('lobby.index') }}" class="primary">Back to lobby</a>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+        integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
+        crossorigin="anonymous"></script>
+<script type="module" src="{{ url_for('static', filename='js/game.js') }}"></script>
+{% endblock %}

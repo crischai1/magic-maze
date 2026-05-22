@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Lobby {{ code }} — Co-Op Maze Heist{% endblock %}
+{% block content %}
+<section class="lobby"
+        data-code="{{ code }}"
+        data-username="{{ username }}"
+        data-player-id="{{ player_id }}">
+    <h1>Lobby <span class="code">{{ code }}</span></h1>
+    <p class="hint">Share this code with friends — they can join from the home page.</p>
+
+    <div class="lobby-grid">
+        <section>
+            <h2>Players</h2>
+            <ul id="player-list" class="player-list"></ul>
+        </section>
+
+        <section class="scenario-picker">
+            <h2>Scenario</h2>
+            <select id="scenario-select">
+                {% for s in scenarios %}
+                <option value="{{ s.id }}">{{ s.name }} ({{ s.min_players }}-{{ s.max_players }}p)</option>
+                {% endfor %}
+            </select>
+            <p id="scenario-desc" class="scenario-desc"></p>
+            <div class="scenario-data" style="display:none">
+                {% for s in scenarios %}
+                <div data-id="{{ s.id }}" data-desc="{{ s.description }}"></div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <div class="lobby-actions">
+        <button id="start-btn" class="primary" disabled>Waiting for host…</button>
+        <a href="{{ url_for('lobby.index') }}" class="secondary">Leave</a>
+    </div>
+
+    <p id="lobby-status" class="status"></p>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+        integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
+        crossorigin="anonymous"></script>
+<script type="module" src="{{ url_for('static', filename='js/lobby.js') }}"></script>
+{% endblock %}
