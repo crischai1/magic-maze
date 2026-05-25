@@ -45,6 +45,7 @@
 .feature-item-P, .feature-exit-P, .feature-vortex-P, .feature-explore-P { color: var(--hero-purple); }
 .feature-item-G, .feature-exit-G, .feature-vortex-G, .feature-explore-G { color: var(--hero-green); }
 .feature-item-O, .feature-exit-O, .feature-vortex-O, .feature-explore-O { color: var(--hero-orange); }
+.feature-exit { color: #b8c4d9; } /* neutral exits (scenario 1) */
 .feature-sand-timer { color: #b8c4d9; }
 .feature-crystal-ball { color: #9a7fff; }
 .feature-camera { color: #d4d000; }

@@ -74,6 +74,8 @@ class ScenarioConfig:
     extra_rules: tuple[str, ...] = ()
     min_players: int = 1
     max_players: int = 8
+    colored_exits: bool = True
+    any_hero_can_exit: bool = False
 
 
 @dataclass

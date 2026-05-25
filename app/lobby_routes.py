@@ -34,6 +34,10 @@ def index():
 
 @bp.route("/lobby/<code>")
 def lobby_page(code: str):
+    # Codes are case-insensitive — canonicalize the URL to uppercase so the
+    # browser bar matches the displayed code and shared links normalize.
+    if code != code.upper():
+        return redirect(url_for("lobby.lobby_page", code=code.upper()))
     lobby = lobby_manager.get(code)
     if lobby is None:
         return render_template("index.html", error=f"Lobby {code!r} not found", username=get_username()), 404
@@ -52,6 +56,8 @@ def lobby_page(code: str):
 
 @bp.route("/game/<code>")
 def game_page(code: str):
+    if code != code.upper():
+        return redirect(url_for("lobby.game_page", code=code.upper()))
     lobby = lobby_manager.get(code)
     if lobby is None or lobby.game is None:
         abort(404)

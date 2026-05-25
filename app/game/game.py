@@ -273,13 +273,31 @@ class Game:
             self._apply_op(done)
             self.version += 1
             return Accept([done])
-        new_tile_id = self.deck[0]
-        new_tile = self.tile_registry[new_tile_id]
         entrance_dir = anchor_edge.opposite()
-        rotation, new_origin, _ = self._compute_placement(
-            new_tile, adj, entrance_dir, anchor_pos, anchor_edge
-        )
-        self.deck.pop(0)
+        # Find the first deck tile that actually fits at this anchor — some
+        # corridor tiles (with limited door positions) can be geometrically
+        # unplaceable next to certain existing tiles.
+        picked_idx = -1
+        rotation: int = 0
+        new_origin: tuple[int, int] = (0, 0)
+        for idx, candidate_id in enumerate(self.deck):
+            candidate = self.tile_registry[candidate_id]
+            placement = self._compute_placement(
+                candidate, adj, entrance_dir, anchor_pos, anchor_edge
+            )
+            if placement is not None:
+                rotation, new_origin, _ = placement
+                picked_idx = idx
+                break
+        if picked_idx < 0:
+            # No tile in the deck fits here — seal the anchor as a dead end.
+            src_tile = self.board.cell_at(anchor_pos).tile
+            src_tile.explored_anchors.add(tuple(anchor_pos))
+            done = ExplorationDoneOp(sealed_anchors=[list(anchor_pos)])
+            self._apply_op(done)
+            self.version += 1
+            return Accept([done])
+        new_tile_id = self.deck.pop(picked_idx)
         self.board.place(new_tile_id, new_origin, rotation)
         # Mark both doors as used: source (on previous tile) and entrance (on
         # newly placed tile). The hero walked through both, so both glyphs
@@ -337,7 +355,12 @@ class Game:
         entrance_dir: Direction,
         anchor_pos: tuple[int, int],
         anchor_edge: Direction,
-    ) -> tuple[int, tuple[int, int], tuple[int, int]]:
+    ) -> tuple[int, tuple[int, int], tuple[int, int]] | None:
+        """Find a (rotation, origin, adj) that places `tile` so one of its
+        explore-door cells lands at `adj` facing `entrance_dir` and the tile
+        footprint does not overlap any existing tile. Returns None if no
+        rotation fits — caller must handle (try a different tile or seal the
+        anchor)."""
         for rotation in range(4):
             for lr in range(4):
                 for lc in range(4):
@@ -350,7 +373,7 @@ class Game:
                     origin = (adj[0] - grow, adj[1] - gcol)
                     if self._overlap_free(origin):
                         return rotation, origin, adj
-        return 0, (adj[0], adj[1]), adj
+        return None
 
     def _rotate_local(self, lr: int, lc: int, rotation: int) -> tuple[int, int]:
         from app.game.board import rotate_local
@@ -422,6 +445,7 @@ class Game:
                 "enabled_features": sorted(self.scenario.enabled_features),
                 "extra_rules": list(self.scenario.extra_rules),
                 "deck_total": len(self.scenario.deck_tile_ids),
+                "colored_exits": self.scenario.colored_exits,
             },
             "phase": self.phase.value,
             "version": self.version,

@@ -255,7 +255,11 @@ def check_theft_trigger(game: "Game") -> list[DeltaOp]:
 
 
 def check_exit_trigger(game: "Game", color: Color) -> list[DeltaOp]:
-    """If a hero is on its matching exit during ESCAPING phase, mark it exited."""
+    """If a hero is on its matching exit during ESCAPING phase, mark it exited.
+
+    When the scenario sets any_hero_can_exit=True, any hero may exit through
+    any exit cell regardless of colour — used in Scenario 1 (single exit).
+    """
     if game.phase != Phase.ESCAPING:
         return []
     pawn = game.pawns.get(color)
@@ -266,4 +270,8 @@ def check_exit_trigger(game: "Game", color: Color) -> list[DeltaOp]:
         return []
     if EXIT_FOR_COLOR[color] in cell.features:
         return [PawnExitOp(color=color.value)]
+    if game.scenario.any_hero_can_exit:
+        all_exits = frozenset(EXIT_FOR_COLOR.values())
+        if any(f in cell.features for f in all_exits):
+            return [PawnExitOp(color=color.value)]
     return []

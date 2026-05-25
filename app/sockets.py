@@ -8,7 +8,7 @@ from flask import request, session
 from flask_socketio import emit, join_room, leave_room
 
 from app.extensions import lobby_manager, socketio
-from app.game.enums import ActionType, Color, Direction
+from app.game.enums import ActionType, Color, Direction, action_for_direction
 from app.game.game import Game
 from app.game.lobby import Lobby
 from app.game.models import Player
@@ -20,6 +20,10 @@ NAMESPACE = "/game"
 _sid_to_context: dict[str, tuple[str, str]] = {}
 # Track which lobbies have a running game loop greenthread.
 _game_loops: dict[str, bool] = {}
+# Lobby code → grace deadline (ms-epoch). While active, disconnects DO NOT
+# remove players from the lobby — used during the Play-Again page navigation
+# so the host slot survives the brief socket churn.
+_post_game_grace: dict[str, int] = {}
 
 
 def _player_from_session() -> tuple[Optional[str], Optional[str]]:
@@ -103,12 +107,18 @@ def on_disconnect():
         return
     player.connected = False
     player.sid = None
-    if lobby.game is None:
+    now_ms = int(time.time() * 1000)
+    in_post_game_grace = _post_game_grace.get(code, 0) > now_ms
+    if lobby.game is None and not in_post_game_grace:
         # Pre-game: remove player from lobby
         lobby.remove_player(pid)
         _broadcast_lobby(lobby)
         if not lobby.players:
             lobby_manager.delete(code)
+    elif lobby.game is None:
+        # Post-game transition: keep their slot so the lobby survives the
+        # Play-Again page navigation. They will reconnect via lobby:join.
+        _broadcast_lobby(lobby)
     else:
         # In-game: keep their slot, broadcast state
         _broadcast_snapshot(lobby.game)
@@ -272,13 +282,18 @@ def on_reachable(data):
         color = Color(pawn_color)
     except ValueError:
         return
+    player = game.player_by_id(pid)
+    player_actions = player.action_tile.actions if (player and player.action_tile) else frozenset()
     out: dict[str, list[list[int]]] = {}
     for d in ("N", "E", "S", "W"):
+        if action_for_direction(Direction[d]) not in player_actions:
+            out[d] = []
+            continue
         out[d] = game.reachable_in_direction(pid, color, Direction[d])
-    # Vortex targets: any matching-color vortex (other than current cell, not occupied)
+    # Vortex targets: only if player has VORTEX action
     pawn = game.pawns.get(color)
     vortex_targets: list[list[int]] = []
-    if pawn is not None and not pawn.exited:
+    if ActionType.VORTEX in player_actions and pawn is not None and not pawn.exited:
         for v in game.board.find_vortexes(color):
             if v == pawn.pos:
                 continue
@@ -361,6 +376,27 @@ def on_resync(data):
     if lobby is None or lobby.game is None:
         return
     emit("game:snapshot", lobby.game.snapshot())
+
+
+@socketio.on("game:return_to_lobby", namespace=NAMESPACE)
+def on_return_to_lobby(data):
+    """Reset a finished game so the lobby can play again without a new share code."""
+    code = (data.get("code") or "").upper()
+    pid, _ = _player_from_session()
+    lobby = lobby_manager.get(code)
+    if lobby is None or pid is None:
+        return
+    if lobby.game is None or lobby.game.phase.value != "finished":
+        return
+    # Clear action tiles on lobby players so they are re-dealt next game.
+    for player in lobby.players:
+        player.action_tile = None
+    lobby.game = None
+    # Arm the disconnect-grace window so the page-navigation churn that follows
+    # this event doesn't tear the lobby down.
+    _post_game_grace[code] = int(time.time() * 1000) + 15000
+    _broadcast_lobby(lobby)
+    socketio.emit("lobby:redirect_to_lobby", {"code": code}, to=code, namespace=NAMESPACE)
 
 
 # ----------------- Game loop greenthread -----------------

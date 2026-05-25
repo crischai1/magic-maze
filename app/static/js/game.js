@@ -34,6 +34,7 @@ const chatInput = document.getElementById("chat-input");
 const chatCard = document.querySelector(".chat-card");
 const phaseBanner = document.getElementById("phase-banner");
 const resultOverlay = document.getElementById("result-overlay");
+const btnReturnLobby = document.getElementById("btn-return-lobby");
 const deckCounter = document.getElementById("deck-counter");
 
 // ---------------- Helpers ----------------
@@ -180,7 +181,12 @@ function renderFeatures(x, y, def, isExplored, exploreEdgeGlobal) {
         if (isExplored && feat.startsWith("explore_")) continue;
         const glyph = featureGlyph(feat);
         if (!glyph) continue;
-        const klass = "feature-" + featureClassSuffix(feat);
+        let suffix = featureClassSuffix(feat);
+        // In scenarios with colored_exits=false, all exits use a neutral class.
+        if (feat.startsWith("exit_") && state.scenario && !state.scenario.colored_exits) {
+            suffix = "exit";
+        }
+        const klass = "feature-" + suffix;
         let transform;
         if (feat.startsWith("explore_") && exploreEdgeGlobal) {
             // Door sits on the wall midpoint of the cell's outer edge, with the
@@ -327,22 +333,20 @@ function renderMoveHints() {
 
     const moves = cachedReachable.moves || {};
     // One hint per direction: the immediately adjacent open cell (one square away).
-    // Clicking it slides the pawn all the way to the farthest reachable cell in
-    // that direction (standard Magic Maze slide rule).
+    // Clicking moves exactly ONE square in that direction; click again to keep moving.
     for (const dir of DIR_NAMES) {
         const dirMoves = moves[dir] || [];
         if (!dirMoves.length) continue;
-        const [r, c] = dirMoves[0];                              // adjacent cell — the visual indicator
-        const dest = dirMoves[dirMoves.length - 1];              // farthest cell  — the actual destination
+        const [r, c] = dirMoves[0];                              // adjacent cell — visual indicator AND destination
         const x = c * CELL_SIZE;
         const y = r * CELL_SIZE;
         const hint = el("rect", {
             x, y, width: CELL_SIZE, height: CELL_SIZE, class: "move-hint",
-            "data-r": dest[0], "data-c": dest[1], "data-dir": dir,
+            "data-r": r, "data-c": c, "data-dir": dir,
         });
         hint.addEventListener("click", (e) => {
             e.stopPropagation();
-            emitMove(dir, dest);
+            emitMove(dir, [r, c]);
         });
         overlayLayer.appendChild(hint);
     }
@@ -536,6 +540,14 @@ socket.on("game:result", (r) => {
     }
     reason.textContent = r.reason || "";
     resultOverlay.classList.remove("hidden");
+});
+
+btnReturnLobby.addEventListener("click", () => {
+    socket.emit("game:return_to_lobby", { code });
+});
+
+socket.on("lobby:redirect_to_lobby", (d) => {
+    window.location.href = "/lobby/" + (d.code || code);
 });
 
 // ---------------- Snapshot + delta ----------------

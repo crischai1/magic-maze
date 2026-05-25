@@ -19,13 +19,13 @@
       }
     },
     {
-      "_comment": "Yellow item + green vortex. L-shaped room: item (1,2) in NE nook (2 walls), vortex (2,1) in mid-row. 3 doors (N/E/S); the W edge is walled.",
+      "_comment": "Yellow item + green vortex. More restrictive: sealed cells at (0,2),(1,0),(3,1) break room into corridors. iy at (1,2) in an inner alcove; vg at (2,1) in a mid-room cell. 3 doors (N/E/S); W walled.",
       "id": "T02",
       "cells": [
-        ["#..#", "....:xy", "#...", "##.."],
-        ["...#", "....", "##..:iy", "....:xp"],
-        ["....", "....:vg", "....", ".#.."],
-        ["..##", "..#.", "....:xo", ".##."]
+        ["#..#", "....:xy", "####", "##.."],
+        ["####", "....", "....:iy", "....:xp"],
+        ["....", "....:vg", "##..", ".#.."],
+        ["..##", "####", "....:xo", ".##."]
       ],
       "edges": {
         "N": [{"col": 1, "row": 0}],
@@ -34,12 +34,12 @@
       }
     },
     {
-      "_comment": "Purple item + sand timer + orange vortex. Inner partition: timer (1,1) in a 2-walled nook, item (1,2) in a 2-walled nook on the other side, orange vortex (2,2) in a corner-ish pocket. 3 doors (N/E/S); W walled.",
+      "_comment": "Purple item + sand timer + orange vortex. Sealed NE pocket (0,3) and wall at (1,0) + pillar (2,1) create a tight L-corridor. Timer at (1,1) only reachable from N/E; ip at (1,2); vo at (2,2) behind the pillar. 3 doors (N/E/S); W walled.",
       "id": "T03",
       "cells": [
-        ["#..#", "....:xp", "#...", "##.."],
-        ["...#", "..#.:t", "##..:ip", "....:xy"],
-        ["....", ".#..", "....:vo", ".#.."],
+        ["#..#", "....:xp", "#..#", "####"],
+        ["####", "....:t", "....:ip", "....:xy"],
+        ["....", "####", "....:vo", ".#.."],
         ["..##", "..#.", "....:xg", ".##."]
       ],
       "edges": {
@@ -49,12 +49,12 @@
       }
     },
     {
-      "_comment": "Green item — Z-bend corridor. N door at col 1, S door at col 2 so a chain of T04s never lines up perfectly (offset by 1 column each placement). Path: (0,1)->(1,1)->(2,1)->(2,2)->(3,2). Chest in 3-walled alcove at (1,2), reachable only via (1,1) — never on a forced path.",
+      "_comment": "Green item — Z-bend N/S corridor. N door col 1, S door col 2 (offset by one) so chained hallway tiles snake instead of forming a straight tunnel. Internal path: (0,1)→(1,1)→(2,1)→(2,2)→(3,2). Item ig in 3-walled side alcove at (1,2).",
       "id": "T04",
       "cells": [
         ["####", "....:xg", "####", "####"],
         ["####", "....", "###.:ig", "####"],
-        ["####", "....", "##..", "####"],
+        ["####", "....", "....", "####"],
         ["####", "####", "....:xo", "####"]
       ],
       "edges": {
@@ -79,13 +79,13 @@
       "escalators": [[[1, 1], [2, 2]]]
     },
     {
-      "_comment": "Yellow + Purple exits. Central 2x2 pillar at (1,1)-(2,2) forces heroes around the perimeter ring. Exits (1,0) ey and (1,3) ep sit in the side nooks beside the pillar; both exit cells have walled perimeters so heroes can't escape until they actually reach Phase 2 and exit. 3 doors (N/S/W); E walled.",
+      "_comment": "Yellow + Purple exits. Central 2x2 pillar at (1,1)-(2,2) forces heroes around the perimeter ring. Exits ey at NW corner (0,0) and ep at SE corner (3,3) — both on the outer edge, tucked in walled corner nooks. 3 doors (N/S/W); E walled.",
       "id": "T06",
       "cells": [
-        ["#..#", "....:xy", "#...", "##.."],
-        ["...#:ey", "####", "####", "....:ep"],
+        ["#..#:ey", "....:xy", "#...", "##.."],
+        ["....", "####", "####", "...."],
         ["....:xg", "####", "####", ".#.."],
-        ["..##", "..#.", "....:xo", ".##."]
+        ["..##", "..#.", "....:xo", ".##.:ep"]
       ],
       "edges": {
         "N": [{"col": 1, "row": 0}],
@@ -94,13 +94,13 @@
       }
     },
     {
-      "_comment": "Green + Orange exits + sand timer. The timer at (2,1) is walled on N/E/S — a 3-walled dead-end pocket reachable only as an opt-in side trip, not on any forced path. 3 doors (N/S/W); E walled so heroes don't slip out the east edge.",
+      "_comment": "Green + Orange exits + sand timer. Pillar at (0,2) and wall at (3,1) fragment the room; dead-end pocket at (1,3). eg at NW corner (0,0), eo at SE corner (3,3). Timer at (2,1) in 3-walled nook. 3 doors (N/S/W); E walled.",
       "id": "T07",
       "cells": [
-        ["#..#", "....:xy", "#...", "##.."],
-        ["...#:eg", "....", "....", "....:eo"],
+        ["#..#:eg", "....:xy", "####", "##.."],
+        ["...#", "....", "....", ".###"],
         ["....:xp", "###.:t", "....", ".#.."],
-        ["..##", "..#.", "....:xg", ".##."]
+        ["..##", "####", "....:xg", ".##.:eo"]
       ],
       "edges": {
         "N": [{"col": 1, "row": 0}],
@@ -141,17 +141,17 @@
       "escalators": [[[1, 0], [2, 1]]]
     },
     {
-      "_comment": "Horizontal Z-bend corridor with sand timer. W door at row 1, E door at row 2 so a chain of T10s never lines up perfectly (offset by 1 row each placement). Path: (1,0)->(1,1)->(2,1)->(2,2)->(2,3). Sand timer at (0,1) in 3-walled alcove off the corridor — heroes must deliberately step up into it.",
+      "_comment": "Horizontal Z-bend corridor with sand timer. W door row 1, E door row 2 (offset by one) so chained hallway tiles snake instead of forming a straight tunnel. Internal path: (1,0)→(1,1)→(2,1)→(2,2)→(2,3). Sand timer at (1,2) in a 3-walled side alcove off the main corridor.",
       "id": "T10",
       "cells": [
-        ["####", "##.#:t", "####", "####"],
-        ["....:xg", "....", "####", "####"],
+        ["####", "####", "####", "####"],
+        ["....:xg", "....", "###.:t", "####"],
         ["####", "....", "....", "....:xy"],
         ["####", "####", "####", "####"]
       ],
       "edges": {
-        "E": [{"col": 3, "row": 2}],
-        "W": [{"col": 0, "row": 1}]
+        "W": [{"col": 0, "row": 1}],
+        "E": [{"col": 3, "row": 2}]
       }
     },
     {
@@ -185,6 +185,83 @@
         "W": [{"col": 0, "row": 2}]
       },
       "escalators": [[[1, 1], [2, 2]]]
+    },
+    {
+      "_comment": "Yellow vortex + camera + sand timer. E/S/W doors only (no N door). vy at (0,3) NE 3-wall nook (accessible only from S via (1,3)); camera at (2,2) inner cell; timer at (3,3) SE corner.",
+      "id": "T13",
+      "cells": [
+        ["####", "#...", "#...", "##.#:vy"],
+        ["....:xg", "....", "....", "....:xp"],
+        ["....", "....", "....:cam", ".#.."],
+        ["..##", "..#.", "....:xo", ".##.:t"]
+      ],
+      "edges": {
+        "E": [{"col": 3, "row": 1}],
+        "S": [{"col": 2, "row": 3}],
+        "W": [{"col": 0, "row": 1}]
+      }
+    },
+    {
+      "_comment": "Purple vortex + crystal ball + sand timer. N/E/W doors (no S door). vp at (3,3) SE nook accessible only from N via (2,3); crystal ball at (1,2); timer at (3,0) SW corner. Inner block (3,2) seals off lower-right.",
+      "id": "T14",
+      "cells": [
+        ["#..#", "....:xy", "#...", "##.."],
+        ["...#", "....", "....:c", "...."],
+        ["....:xo", "....", "..##", "....:xp"],
+        ["..##:t", "..#.", "####", ".##.:vp"]
+      ],
+      "edges": {
+        "N": [{"col": 1, "row": 0}],
+        "E": [{"col": 3, "row": 2}],
+        "W": [{"col": 0, "row": 2}]
+      }
+    },
+    {
+      "_comment": "Two security cameras + sand timer. N/E/S doors. cam at (0,3) NE 3-wall nook; cam at (2,1) inner nook (E-only access); timer at (3,3) SE corner. Two inner walls create a maze feel.",
+      "id": "T15",
+      "cells": [
+        ["#..#", "....:xy", "#...", "##.#:cam"],
+        ["...#", "....", "..##", "....:xp"],
+        ["....", "#.##:cam", "..#.", ".#.."],
+        ["..##", "..#.", "....:xo", ".##.:t"]
+      ],
+      "edges": {
+        "N": [{"col": 1, "row": 0}],
+        "E": [{"col": 3, "row": 1}],
+        "S": [{"col": 2, "row": 3}]
+      }
+    },
+    {
+      "_comment": "Green vortex + camera + sand timer + escalator. N/S/W doors. vg at (0,3) sealed pocket — escalator (0,3)<->(1,2) is the only link. Camera at (2,2); timer in dead-end at (2,3).",
+      "id": "T16",
+      "cells": [
+        ["#..#", "....:xy", "#...", "####:vg"],
+        ["...#", "....", "..##", ".#.."],
+        ["....:xo", "....", "....:cam", ".###:t"],
+        ["..##", "..#.", "....:xg", ".##."]
+      ],
+      "edges": {
+        "N": [{"col": 1, "row": 0}],
+        "S": [{"col": 2, "row": 3}],
+        "W": [{"col": 0, "row": 2}]
+      },
+      "escalators": [[[0, 3], [1, 2]]]
+    },
+    {
+      "_comment": "Single exit tile (Scenario 1). ep at NW corner (0,0) — the ONE exit all heroes must reach. Two inner pillars at (0,2) and (2,1) create a maze path around the room. 4 doors (N/E/S/W).",
+      "id": "T17",
+      "cells": [
+        ["#..#:ep", "....:xy", "####", "##.."],
+        ["...#", "....", "....", "....:xp"],
+        ["....:xg", "####", "....", ".#.."],
+        ["..##", "..#.", "....:xo", ".##."]
+      ],
+      "edges": {
+        "N": [{"col": 1, "row": 0}],
+        "E": [{"col": 3, "row": 1}],
+        "S": [{"col": 2, "row": 3}],
+        "W": [{"col": 0, "row": 2}]
+      }
     }
   ]
 }

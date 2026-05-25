@@ -26,5 +26,7 @@ def load_scenarios(path: str | Path) -> dict[int, ScenarioConfig]:
             extra_rules=tuple(raw.get("extra_rules", [])),
             min_players=raw.get("min_players", 1),
             max_players=raw.get("max_players", 8),
+            colored_exits=raw.get("colored_exits", True),
+            any_hero_can_exit=raw.get("any_hero_can_exit", False),
         )
     return out

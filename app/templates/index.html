@@ -18,7 +18,7 @@
         <div class="home-actions">
             <button type="submit" name="action" value="create" class="primary">Create new lobby</button>
             <div class="join-group">
-                <input name="code" placeholder="ROOM CODE" maxlength="4" pattern="[A-Z0-9]{4}" style="text-transform:uppercase" />
+                <input name="code" placeholder="ROOM CODE" maxlength="4" pattern="[A-Za-z0-9]{4}" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()" autocapitalize="characters" />
                 <button type="submit" name="action" value="join">Join</button>
             </div>
         </div>

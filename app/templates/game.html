@@ -55,7 +55,7 @@
         <section class="card help">
             <h3>Controls</h3>
             <p>Click a pawn to select it.</p>
-            <p>Click a highlighted blue square to slide there (your card must allow that direction).</p>
+            <p>Click a highlighted blue square to move one step in that direction (click again to keep going).</p>
             <p>Click a purple square to teleport via vortex (any hero, any matching-color vortex).</p>
             <p>Keys: <kbd>W</kbd>/<kbd>A</kbd>/<kbd>S</kbd>/<kbd>D</kbd> slide max, <kbd>E</kbd> escalator, <kbd>X</kbd> explore. <kbd>1</kbd>=Y <kbd>2</kbd>=P <kbd>3</kbd>=G <kbd>4</kbd>=O.</p>
         </section>
@@ -66,7 +66,7 @@
     <div class="overlay-card">
         <h2 id="result-title"></h2>
         <p id="result-reason"></p>
-        <a href="{{ url_for('lobby.index') }}" class="primary">Back to lobby</a>
+        <button id="btn-return-lobby" class="primary">Play Again</button>
     </div>
 </div>
 {% endblock %}
