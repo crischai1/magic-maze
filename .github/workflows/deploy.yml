@@ -32,6 +32,8 @@ jobs:
           set -ex
           DEPLOY=$(printf '%s' "${{ secrets.DEPLOY_PATH }}" | tr -d '[:space:]')
           cd "$DEPLOY"
+          git reset --hard HEAD
+          git clean -fd
           git pull origin main
           ./.venv/bin/pip install -e .
           screen -S magic-maze -X quit || true

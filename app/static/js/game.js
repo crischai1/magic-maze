@@ -710,7 +710,7 @@ document.addEventListener("keydown", (e) => {
     if (document.activeElement && document.activeElement.tagName === "INPUT") return;
     const k = e.key.toLowerCase();
     if (k in DIR_KEYS) {
-        // WASD = one square at a time. Click a highlighted square to slide farther.
+        // WASD = one square at a time, same as clicking a highlighted square.
         const dir = DIR_NAMES[DIR_KEYS[k]];
         if (cachedReachable && cachedReachable.moves && cachedReachable.moves[dir] && cachedReachable.moves[dir].length) {
             const first = cachedReachable.moves[dir][0];

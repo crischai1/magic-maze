@@ -9,23 +9,24 @@ The deployed name is **"Co-Op Maze Heist"** to avoid trademark issues. Internall
 ## Status
 
 ### What works
-- **Lobbies**: 4-character base32 room codes, multiple concurrent games, host promotion on disconnect.
+- **Lobbies**: 4-character base32 room codes, **case-insensitive** end-to-end (server normalizes, routes redirect lowercase paths to uppercase, join form auto-uppercases as you type); multiple concurrent games; host promotion on disconnect; **"Play Again"** from the game-over overlay returns the whole lobby to the waiting room without a new code.
 - **Real-time multiplayer**: Flask-SocketIO + eventlet, one greenthread per active game broadcasting at 5 Hz.
 - **Core game mechanics**:
   - Random hero placement on the starting tile's 4 START squares.
-  - Action-card distribution by player count (1–8); a 1-player game gets all 7 actions on one card.
-  - **Movement**: WASD = single step; click a highlighted square to slide multi-cell (rulebook allows sliding any distance).
+  - Action-card distribution by player count (1–8) with **multiple partition layouts per player count** chosen randomly each game, then shuffled across players — players are unlikely to receive the same card layout twice in a row. 1-player still gets all 7 actions on one card.
+  - **Movement**: **one square per click or per WASD press**; press repeatedly to keep going. No more "slide all the way" — clicking a highlighted square moves exactly one cell in that direction, giving players precise control.
+  - **Move-hint filtering**: blue hint squares only appear for directions the *clicking player's own* action card permits — you no longer see hints for actions you can't perform.
   - **Hero collision**: pawns block each other; can't share a square.
   - **Vortex**: teleports any hero from anywhere to any matching-color vortex; permanently locks the moment the theft fires.
   - **Escalator**: paired-cell jumps within a tile.
   - **Theft trigger**: phase 1 → phase 2 fires only when **all 4 heroes are simultaneously on their item squares**.
-  - **Exit**: each hero escapes through its matching-color exit; win when all 4 exit.
+  - **Exit**: each hero escapes through its matching-color exit; win when all 4 exit. Scenario 1 uses a `any_hero_can_exit: true` flag plus a `colored_exits: false` rendering flag so all four heroes use a single neutral exit (per the rulebook's intro scenario).
   - **Sand Timer**: one-use squares; flipping inverts remaining (elapsed becomes remaining) and opens a chat window.
   - **Chat**: hard-locked by default; unlocks for a window when a Sand Timer is flipped; closes again on the next action.
-  - **Exploration**: matching-color hero stepping on an explore door triggers tile placement; auto-rotation picks the only legal orientation; both source and destination doors are marked used and disappear from the render.
+  - **Exploration**: matching-color hero stepping on an explore door triggers tile placement. The server iterates the deck looking for the first tile that geometrically fits; if no rotation of any deck tile fits the anchor (e.g. corridor-tile + already-crowded neighborhood), the anchor is **sealed as a dead-end** rather than crashing. Source and destination doors disappear from the render once explored.
   - **Crystal Ball**: when the Mage explores from a Crystal Ball cell, they get 2 tile placements in a row (scenario 5+).
-- **Frontend**: SVG board with hero-colored door glyphs (pentagon arrows pointing outward); WASD + mouse input; sidebar with timer / action card / players / chat; a server-driven legend on the home page explaining every square type.
-- **Tests**: 65 unit tests passing, covering rotation math, action distribution, timer (including flip math), board, wall symmetry, door reachability, tile/scenario loaders, validator rules, and the client-shape serialization contract.
+- **Frontend**: SVG board with hero-colored door glyphs (pentagon arrows pointing outward); per-hero weapon glyphs for item squares (sword/potion/bow/axe) tinted by hero color; WASD + mouse input; sidebar with timer / action card / players / chat. Glyph `<defs>` live in `base.html` so the home-page legend and the live board render from one shared SVG sprite sheet.
+- **Tests**: 67 unit tests passing, covering rotation math, action distribution, timer (including flip math), board, wall symmetry, door reachability, tile/scenario loaders, validator rules, and the client-shape serialization contract.
 
 ### What's incomplete / not modeled
 
@@ -35,7 +36,8 @@ The deployed name is **"Co-Op Maze Heist"** to avoid trademark issues. Internall
   - `camera` — Security Camera squares exist as a Feature, but the rule "2+ active cameras block Sand Timer flips" only partially fires (the move-validator branch in `move_validator.py` is hooked up but the camera-disable handler is not fully tested).
   - `dwarf_passage` — Feature exists; the Dwarf-only traversal check is not implemented in the validator yet.
   - `elf_explore_talks` — partly wired in `commit_exploration` but the close-on-next-action edge case isn't covered.
-- **Manual tile-rotation UI for exploration**: the server auto-picks the only legal orientation. The published game lets the explorer choose orientation when more than one fits.
+- **Manual tile-rotation UI for exploration**: the server auto-picks the first legal orientation by walking rotations 0→3. The published game lets the explorer choose orientation when more than one fits.
+- **Tile placement "no fit" UX**: when no deck tile geometrically fits at an anchor, the anchor is silently sealed as a dead-end. This is safe (no crash) but surprising — the player doesn't get feedback explaining why exploration didn't reveal a tile. A pre-explore peek + a "no tile fits here" banner would be cleaner.
 - **Integration tests** (`tests/integration/`): the directory exists but no socket-test_client scripts have been written. There's no end-to-end "scripted moves solve scenario 1" test yet.
 - **Disconnect/reconnect**: a player who drops loses their slot (pre-game) or stays disconnected in-game; reconnect via the same `player_id` cookie reattaches the slot but the action card is not transferable on disconnect (real rulebook: "actions become temporarily shared with neighbors").
 - **Persistence**: all state is in-process Python dicts. Server restart drops everything. `Game.snapshot()` is set up to make a future Redis swap easy.
@@ -44,7 +46,21 @@ The deployed name is **"Co-Op Maze Heist"** to avoid trademark issues. Internall
 
 ### Tile data
 
-11 tiles in [app/data/tiles.json](app/data/tiles.json). The published game has 24+. Each authored tile has 4 colored explore doors on the perimeter (one per edge, except T04 and T10 which are restrictive corridors). Adding more tiles is a JSON edit; the loader normalizes walls symmetrically and the test suite checks for sealed doors and asymmetric walls.
+**17 tiles** in [app/data/tiles.json](app/data/tiles.json) — the published game has 24+. Most authored tiles have 4 colored explore doors; the exceptions are intentionally restrictive:
+
+- **T01** — start tile (4 START squares + 4 doors).
+- **T02, T03, T05, T06, T07, T08, T09, T11, T12** — 4-door rooms with varied inner-wall layouts (L-shapes, pillars, plus-shapes, snaking dividers). Items, sand timers, vortexes, and exits prefer corner/nook cells.
+- **T04** — vertical corridor (N+S doors only; both at the same column).
+- **T10** — horizontal corridor (E+W doors only; both at the same row).
+- **T13** — E/S/W doors (no N) — first 3-door combo of this kind; carries a Yellow vortex + camera + sand timer.
+- **T14** — N/E/W doors — Purple vortex + crystal ball + sand timer; one cell sealed off.
+- **T15** — N/E/S doors — two cameras + sand timer.
+- **T16** — N/S/W doors + an escalator pair into a sealed Green-vortex pocket; camera + sand timer.
+- **T17** — 4-door tile with a Purple-coded **single exit** in the NW corner; used in Scenario 1 in place of separate per-color exit tiles.
+
+Escalator pairs now appear on T08 (×2), T09, T11, T12, and T16 — a regular sight in the deck rather than the previous one-off on T08. Each escalator's two endpoints must live in **separate walking components** of the tile (tests enforce this).
+
+Adding more tiles is a JSON edit; the loader normalizes walls symmetrically and the test suite checks for sealed doors, asymmetric walls, and escalator isolation.
 
 ---
 
@@ -106,14 +122,14 @@ magic-maze/
 │   │   └── scenarios.py           # ScenarioConfig loader
 │   │
 │   ├── data/
-│   │   ├── tiles.json             # 11 tiles (1 start + 10 deck)
-│   │   └── scenarios.json         # 9 of the 17 published scenarios
+│   │   ├── tiles.json             # 17 tiles (1 start + 16 deck, incl. 3-door variants)
+│   │   └── scenarios.json         # 9 of the 17 published scenarios; all timers 120 s
 │   │
 │   ├── templates/
 │   │   ├── base.html
 │   │   ├── index.html             # Home: username, create/join, hero+square-types legend
 │   │   ├── lobby.html             # Waiting room; live-updated via SocketIO
-│   │   └── game.html              # Board + sidebar; <defs> for all SVG glyphs
+│   │   └── game.html              # Board + sidebar (glyph <defs> are in base.html)
 │   │
 │   └── static/
 │       ├── css/
@@ -186,6 +202,9 @@ These are the load-bearing assumptions; tests enforce them.
 | Theft fires when only some heroes have items | The trigger is in `move_validator.check_theft_trigger()` and must check the heroes' CURRENT positions, not their `has_item` flags. |
 | Server log says `eventlet` deprecated warning | Harmless. Eventlet is in maintenance mode; we use it because it's the most reliable async mode for Flask-SocketIO right now. |
 | Cell-bg has visible grid lines | Don't add `stroke` to `.cell-bg` in [board.css](app/static/css/board.css). The thick white `.cell-wall` lines should be the only visible separators. |
+| Exploration crashes with `Cell (r,c) already occupied` | This should no longer happen — `_compute_placement` returns `None` on geometric failure and `commit_exploration` walks the deck to find a fitting tile, sealing the anchor as a dead-end if none fits. If you see it, something is calling `board.place` directly bypassing `commit_exploration`. |
+| Lobby form rejects a lowercase code | The `<input pattern>` should be `[A-Za-z0-9]{4}` and an `oninput` handler uppercases live. Server-side normalization (`lobby_manager.get` etc.) already handles either case. |
+| "Play Again" button does nothing | Game must be in `phase=finished` when `game:return_to_lobby` is emitted. Handler is in [sockets.py](app/sockets.py); look for the `lobby:redirect_to_lobby` broadcast it triggers. |
 
 ---
 
@@ -196,12 +215,13 @@ These are the load-bearing assumptions; tests enforce them.
    - `dwarf_passage` — add a check in `move_validator.validate_move` (Dwarf bypasses passage walls).
    - `camera` — finish the 2+ active cameras → block Sand Timer rule.
 2. **Manual tile-rotation UI for exploration.** Server should broadcast all legal rotations on `RequireExplorationOp`; client lets the explorer cycle with a key (R) and click to confirm.
-3. **More tiles.** 13 more to get to the published count. Add at runtime via JSON; the loader handles everything.
-4. **Integration tests.** `tests/integration/` is empty. The lowest-friction approach is Flask-SocketIO's `socketio.test_client(app)` driving two clients through a scripted game.
+3. **More tiles.** 7 more to reach the published count of 24. Add at runtime via JSON; the loader handles everything. New combos to target: corridors with mid-tile doors, tiles with 2-room dividers + a vortex in each room, tiles that combine crystal balls with cameras.
+4. **Integration tests.** `tests/integration/` is empty. The lowest-friction approach is Flask-SocketIO's `socketio.test_client(app)` driving two clients through a scripted game. A "place every deck tile in order at every anchor in T01" placement-coverage test would catch geometric-impossibility cases that the current sealed-dead-end fallback hides.
 5. **Reconnect polish.** When a player disconnects mid-game their action card should become temporarily shared with the rest of the table (per rulebook). Right now their slot just goes dormant.
 6. **Mobile.** SVG already scales; needs touch-input handling and a responsive sidebar.
 7. **Sound cues.** Tile placement, theft, exit, time-out — small original WAV/OGG samples would help "no talking" feel right.
 8. **Persistence.** Swap `LobbyManager`'s in-memory dicts for a Redis-backed implementation behind the same interface; `Game.snapshot()` is already suitable.
+9. **Smarter dead-end avoidance.** Today, if no deck tile fits an anchor, the anchor is sealed silently. A more rulebook-faithful behavior would be to *peek* before triggering exploration and tell the player "no tile fits" before they commit. Also: shuffle the deck once when the first un-placeable tile is hit (so it can re-draw) rather than skipping past it permanently.
 
 ---
 
