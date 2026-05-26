@@ -542,9 +542,14 @@ socket.on("game:result", (r) => {
     resultOverlay.classList.remove("hidden");
 });
 
-btnReturnLobby.addEventListener("click", () => {
-    socket.emit("game:return_to_lobby", { code });
-});
+// Defensive: the Play-Again button only exists when game.html has been updated
+// to include it. If the deployed template is stale, fall back to a direct link
+// to the lobby so the rest of the page still works.
+if (btnReturnLobby) {
+    btnReturnLobby.addEventListener("click", () => {
+        socket.emit("game:return_to_lobby", { code });
+    });
+}
 
 socket.on("lobby:redirect_to_lobby", (d) => {
     window.location.href = "/lobby/" + (d.code || code);
