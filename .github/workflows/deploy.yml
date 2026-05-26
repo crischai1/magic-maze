@@ -37,8 +37,19 @@ jobs:
           git pull origin main
           ./.venv/bin/pip install -e .
           screen -S magic-maze -X quit || true
+          # Kill anything still holding port 5001 — handles zombie gunicorns
+          # started outside this workflow (e.g. manually, or by an earlier
+          # deploy script) that 'screen -X quit' alone doesn't reach. Without
+          # this, the new gunicorn fails with 'Connection in use' and the old
+          # stale process keeps serving requests.
+          fuser -k 5001/tcp || true
+          sleep 2
           TERM=xterm screen -dmS magic-maze "$DEPLOY/.venv/bin/gunicorn" --worker-class eventlet -w 1 --chdir "$DEPLOY" --bind 127.0.0.1:5001 --error-logfile "$DEPLOY/app.log" run:app
           sleep 2
           screen -ls || true
           ps aux | grep -v grep | grep gunicorn || echo "gunicorn NOT running"
+          # Sanity check: the new gunicorn must actually be listening, otherwise
+          # fail the deploy so the GitHub Action goes red instead of silently
+          # leaving the site broken.
+          curl -fsI http://127.0.0.1:5001/ > /dev/null || { echo "gunicorn not responding on :5001"; tail -50 "$DEPLOY/app.log"; exit 1; }
           ENDSSH
