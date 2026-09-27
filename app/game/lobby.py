@@ -94,6 +94,10 @@ class LobbyManager:
     def delete(self, code: str) -> None:
         self.lobbies.pop(code.upper(), None)
 
+    def active_count(self) -> int:
+        """Lobbies with at least one connected player: what a restart would break."""
+        return sum(1 for lobby in self.lobbies.values() if any(p.connected for p in lobby.players))
+
     def start_game(self, lobby: Lobby, seed: Optional[int] = None) -> Game:
         scenario = self.scenarios.get(lobby.scenario_id)
         if scenario is None:

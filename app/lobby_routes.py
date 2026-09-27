@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from flask import Blueprint, abort, redirect, render_template, request, url_for
+from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 
 from app.extensions import lobby_manager
 from app.session import get_or_create_player_id, get_username, set_username
@@ -11,6 +11,12 @@ bp = Blueprint("lobby", __name__)
 @bp.before_app_request
 def ensure_identity() -> None:
     get_or_create_player_id()
+
+
+@bp.route("/healthz")
+def healthz():
+    # The deploy script waits for rooms == 0 before restarting, since lobbies live in memory.
+    return jsonify(ok=True, rooms=lobby_manager.active_count())
 
 
 @bp.route("/", methods=["GET", "POST"])
