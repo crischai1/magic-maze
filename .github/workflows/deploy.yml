@@ -3,6 +3,7 @@ name: Deploy
 on:
   push:
     branches: [main]
+  pull_request:
 
 jobs:
   test:
@@ -17,39 +18,21 @@ jobs:
 
   deploy:
     needs: test
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    concurrency: deploy-magic-maze
     steps:
-      - name: Setup SSH
+      - name: Deploy over ssh
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
+          # Pasted secrets often carry a trailing newline, which breaks name resolution.
+          SSH_HOST=$(printf '%s' "$SSH_HOST" | tr -d '[:space:]')
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Deploy
-        run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash <<'ENDSSH'
-          set -ex
-          DEPLOY=$(printf '%s' "${{ secrets.DEPLOY_PATH }}" | tr -d '[:space:]')
-          cd "$DEPLOY"
-          git reset --hard HEAD
-          git clean -fd
-          git pull origin main
-          ./.venv/bin/pip install -e .
-          screen -S magic-maze -X quit || true
-          # Kill anything still holding port 5001 — handles zombie gunicorns
-          # started outside this workflow (e.g. manually, or by an earlier
-          # deploy script) that 'screen -X quit' alone doesn't reach. Without
-          # this, the new gunicorn fails with 'Connection in use' and the old
-          # stale process keeps serving requests.
-          fuser -k 5001/tcp || true
-          sleep 2
-          TERM=xterm screen -dmS magic-maze "$DEPLOY/.venv/bin/gunicorn" --worker-class eventlet -w 1 --chdir "$DEPLOY" --bind 127.0.0.1:5001 --error-logfile "$DEPLOY/app.log" run:app
-          sleep 2
-          screen -ls || true
-          ps aux | grep -v grep | grep gunicorn || echo "gunicorn NOT running"
-          # Sanity check: the new gunicorn must actually be listening, otherwise
-          # fail the deploy so the GitHub Action goes red instead of silently
-          # leaving the site broken.
-          curl -fsI http://127.0.0.1:5001/ > /dev/null || { echo "gunicorn not responding on :5001"; tail -50 "$DEPLOY/app.log"; exit 1; }
-          ENDSSH
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          # The key is pinned to labs-deploy on the server; the command is just the app name.
+          # Deploy logic lives in crischai.com/infra/labs-deploy.
+          ssh labs@"$SSH_HOST" magic-maze
